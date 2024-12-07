@@ -5,19 +5,11 @@
 typedef struct {
     // name, state, education, ethnicities, income, population
     // not included: housing, misc, employment
-    char* county_name[128]; //TODO: make it a list [100]
-    char* state[4];
+    char county_name[100]; 
+    char state[4];
     float education_bach;
     float education_hs;
-    float ethnicities[7]; // List of ethnicity floats, there's 8 of them
-    // float ethn_native;
-    // float ethn_asian;
-    // float ethn_black;
-    // float ethn_hisp;
-    // float ethn_islander;
-    // float ethn_mixed;
-    // float ethn_white;
-    // float ethn_white_not_hisp;
+    float ethnicities[8]; // List of ethnicity floats, there's 8 of them
     int median_household_income;
     int per_capita_income;
     float persons_below_poverty_level;
@@ -25,13 +17,10 @@ typedef struct {
 } CountyInfo;
 
 // Define global variables
-CountyInfo county_data[4000];
+CountyInfo county_data[3145];
 int county_count = 0;
 
 int parse_line(char *line, CountyInfo *county) {
-    // // Remove newline character if present
-    // line[strcspn(line, "\n")] = '\0';
-
     // Tokenize the line
     char *token = strtok(line, ",");
     int token_index = 0;
@@ -86,7 +75,8 @@ int parse_line(char *line, CountyInfo *county) {
 
 
 void display() {
-    for (int c = 0; c < county_count; c++) {
+    int c = 0;
+    for (c; c < county_count; c++) {
         CountyInfo county = county_data[c];
         printf("%s, %s:\n", county.county_name, county.state);
         printf("\tBachelor or Higher: %f%%\n", county.education_bach);
@@ -109,9 +99,9 @@ void display() {
 
 void filter_state(char *state) {
     int remaining = 0;
-    for (int c = 0; c < county_count; c++) {
+    int c = 0;
+    for (c; c < county_count; c++) {
         if (strcmp(county_data[c].state, state) == 0) {
-            //remaining++;
             county_data[remaining++] = county_data[c];
         }
     }
@@ -124,7 +114,8 @@ void filter_state(char *state) {
 
 void filter_number(char *field, char *comparison, float number) {
     int remaining = 0;
-    for (int c = 0; c < county_count; c++) {
+    int c = 0;
+    for (c; c < county_count; c++) {
         float field_value = 0.0;
         // identify field, get value of that field
         if (strcmp(field, "Education.Bachelor's Degree or Higher") == 0) {
@@ -161,7 +152,6 @@ void filter_number(char *field, char *comparison, float number) {
         if ((strcmp(comparison, "ge") == 0 && field_value >= number) 
             ||
             (strcmp(comparison, "le") == 0 && field_value <= number)){
-            //remaining++;
             county_data[remaining++] = county_data[c];
         }
     }
@@ -172,7 +162,8 @@ void filter_number(char *field, char *comparison, float number) {
 
 void population_total() {
     int total = 0;
-    for (int c = 0; c < county_count; c++) {
+    int c = 0;
+    for (c; c < county_count; c++) {
         total += county_data[c].population;
     }
     printf("2014 population: %d\n", total);
@@ -180,7 +171,8 @@ void population_total() {
 
 void population_field(char *field) {
     int total = 0;
-    for (int c = 0; c < county_count; c++) {
+    int c = 0;
+    for (c; c < county_count; c++) {
         float percentage = 0.0;
         // identify field, get value of that field
         if (strcmp(field, "Education.Bachelor's Degree or Higher") == 0) {
@@ -215,7 +207,8 @@ void percent(char *field) {
     float total_pop = 0.0;
     float total_sub_pop = 0.0; 
 
-    for (int c = 0; c < county_count; c++) {
+    int c = 0;
+    for (c; c < county_count; c++) {
         total_pop += county_data[c].population;
 
         // Check the field and sum up the corresponding sub-population
@@ -269,7 +262,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    char line[2048];
+    char line[1900];
     int line_num = 0;
     int valid_entry_count = 0;
 
@@ -310,16 +303,13 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    char op_line[1024]; // TODO
+    char op_line[128]; 
     int op_line_num = 0;
 
     while (fgets(op_line, sizeof(op_line), operations_file)) {
         op_line_num++;
         // Initial vars to save operation arguments
-        char operation[sizeof(op_line)];
         char field[sizeof(op_line)];
-        //char comparison[sizeof(op_line)];
-        //float number;
 
         // Identify operation, map to argument variables
         if (strcmp(op_line, "display\n") == 0) {
@@ -330,15 +320,14 @@ int main(int argc, char *argv[]) {
             char *filter = strtok(op_line, ":");
             char *f = strtok(NULL, ":");
             char *comparison = strtok(NULL, ":");
-            //char *number_str = strdup(strtok(NULL, ":"));
-            //number_str[strlen(number_str)-1] = '\0';
-            //number = atof(number_str);
-            float number = atof(strdup(strtok(NULL, ":")));
+            char *number_str = strdup(strtok(NULL, ":"));
+            float number = atof(number_str);
+            free(number_str);
             filter_number(f, comparison, number);
+            
         } else if (strcmp(op_line, "population-total\n") == 0) {
             population_total();
         } else if (strncmp(op_line, "population:", strlen("population:")) == 0) {
-            //(sscanf(op_line, "population:%s", field) == 1) {
             char *op = strtok(op_line, ":");
             char *f = strtok(NULL, ":");
             f[strlen(f)-1] = '\0';
