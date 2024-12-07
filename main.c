@@ -28,157 +28,81 @@ typedef struct {
 CountyInfo county_data[4000];
 int county_count = 0;
 
-int parse_line2(char *line, CountyInfo *data) {
-    char *county_name = strtok(line, ","); // County name
-    if (!county_name) {return 1;} // No data, malformed line
-    // remove quotes
-    strncpy(data->county_name, county_name, sizeof(data->county_name) - 1); //strncpy because fixed length
+int parse_line(char *line, CountyInfo *county) {
+    // // Remove newline character if present
+    // line[strcspn(line, "\n")] = '\0';
 
-    char *state = strtok(NULL, ",");
-    if (!state) {return 1;} // No data, malformed line
-    // remove quotes
-    strncpy(data->state, state, sizeof(data->state) - 1); //strncpy because fixed length
+    // Tokenize the line
+    char *token = strtok(line, ",");
+    int token_index = 0;
 
-    // skip age data
-    for (int i = 0; i < 3; i ++) {
-        strtok(NULL, ",");
-    }
-
-
-
-}
-
-// Used ChatGPT to learn about enums
-// variables match the structure variables
-enum FieldIndex {
-    county_name,
-    state,
-    education_bach,
-    education_hs,
-    ethn_native,
-    ethn_asian,
-    ethn_black,
-    ethn_hisp,
-    ethn_islander,
-    ethn_mixed,
-    ethn_white,
-    ethn_white_not_hisp,
-    median_household_income,
-    per_capita_income,
-    persons_below_poverty_level,
-    population
-};
-
-const char *valid_fields[] = {
-    "County",
-    "State",
-    "Education.Bachelor's Degree or Higher",
-    "Education.High School or Higher",
-    "Ethnicities.American Indian and Alaska Native Alone",
-    "Ethnicities.Asian Alone",
-    "Ethnicities.Black Alone",
-    "Ethnicities.Hispanic or Latino",
-    "Ethnicities.Native Hawaiian and Other Pacific Islander Alone",
-    "Ethnicities.Two or More Races",
-    "Ethnicities.White Alone",
-    "Ethnicities.White Alone not Hispanic or Latino",
-    "Income.Median Household Income",
-    "Income.Per Capita Income",
-    "Income.Persons Below Poverty Level",
-    "Population.2014 Population"
-};
-
-const char *header[] = {"County","State","Age.Percent 65 and Older","Age.Percent Under 18 Years","Age.Percent Under 5 Years","Education.Bachelor's Degree or Higher","Education.High School or Higher","Employment.Nonemployer Establishments","Employment.Private Non-farm Employment","Employment.Private Non-farm Employment Percent Change","Employment.Private Non-farm Establishments","Ethnicities.American Indian and Alaska Native Alone","Ethnicities.Asian Alone","Ethnicities.Black Alone","Ethnicities.Hispanic or Latino","Ethnicities.Native Hawaiian and Other Pacific Islander Alone","Ethnicities.Two or More Races","Ethnicities.White Alone","Ethnicities.White Alone not Hispanic or Latino","Housing.Homeownership Rate","Housing.Households","Housing.Housing Units","Housing.Median Value of Owner-Occupied Units","Housing.Persons per Household","Housing.Units in Multi-Unit Structures","Income.Median Household Income","Income.Per Capita Income","Income.Persons Below Poverty Level","Miscellaneous.Building Permits","Miscellaneous.Foreign Born","Miscellaneous.Land Area","Miscellaneous.Language Other than English at Home","Miscellaneous.Living in Same House +1 Years","Miscellaneous.Manufacturers Shipments","Miscellaneous.Mean Travel Time to Work","Miscellaneous.Percent Female","Miscellaneous.Veterans","Population.2010 Population","Population.2014 Population","Population.Population Percent Change","Population.Population per Square Mile","Sales.Accommodation and Food Services Sales","Sales.Merchant Wholesaler Sales","Sales.Retail Sales","Sales.Retail Sales per Capita","Employment.Firms.American Indian-Owned","Employment.Firms.Asian-Owned","Employment.Firms.Black-Owned","Employment.Firms.Hispanic-Owned","Employment.Firms.Native Hawaiian and Other Pacific Islander-Owned","Employment.Firms.Total","Employment.Firms.Women-Owned"};
-
-int parse_line1(char *line, CountyInfo *data) {
-    
-    char *county_name = strtok(line, ","); // County name
-    if (!county_name) {return 1;} // No data, malformed line
-    strncpy(data->county_name, county_name, sizeof(data->county_name) - 1); //strncpy because fixed length
-    char *data_bit;
-    int valid_data_index = 1;
-    int header_index = 1;
-    while (data_bit = strtok(NULL, ",")) {
-        if (valid_data_index == header_index) {
-            // TODO: remove quotes
-            // FieldIndex[valid_data_index];
-            // (data->FieldIndex[valid_data_index], data_bit, sizeof(data->FieldIndex[valid_data_index]) - 1);
+    while (token != NULL) {
+        // Remove surrounding quotes, if any
+        if (token[0] == '"' && token[strlen(token) - 1] == '"') {
+            token[strlen(token) - 1] = '\0';
+            token++; // Skip the opening quote
         }
-        valid_data_index++;
-        header_index++;
-    }
-}
 
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////// PASTED FROM GPT //////
-
-
-// Function to clean a field by removing surrounding double quotes
-void clean_field(char *field) {
-    char *src = field, *dest = field;
-    while (*src) {
-        if (*src != '"') {
-            *dest++ = *src;
+        if (token_index == 0) { // County Name
+            strncpy(county->county_name, token, sizeof(county->county_name) - 1);
+            county->county_name[sizeof(county->county_name) - 1] = '\0'; // Ensure null-termination
+        } else if (token_index == 1) { // State
+            strncpy(county->state, token, sizeof(county->state) - 1);
+            county->state[sizeof(county->state) - 1] = '\0'; // Ensure null-termination
+        } else if (token_index == 5) { // Education - Bachelor's Degree or Higher
+            county->education_bach = atof(token);
+        } else if (token_index == 6) { // Education - High School or Higher
+            county->education_hs = atof(token);
+        } else if (token_index == 11) { // Ethnicities - Native American
+            county->ethnicities[0] = atof(token);
+        } else if (token_index == 12) { // Ethnicities - Asian
+            county->ethnicities[1] = atof(token);
+        } else if (token_index == 13) { // Ethnicities - Black
+            county->ethnicities[2] = atof(token);
+        } else if (token_index == 14) { // Ethnicities - Hispanic
+            county->ethnicities[3] = atof(token);
+        } else if (token_index == 15) { // Ethnicities - Native Hawaiian
+            county->ethnicities[4] = atof(token);
+        } else if (token_index == 16) { // Ethnicities - Two or More Races
+            county->ethnicities[5] = atof(token);
+        } else if (token_index == 17) { // Ethnicities - White
+            county->ethnicities[6] = atof(token);
+        } else if (token_index == 25) { // Median Household Income
+            county->median_household_income = atoi(token);
+        } else if (token_index == 26) { // Per Capita Income
+            county->per_capita_income = atoi(token);
+        } else if (token_index == 27) { // Persons Below Poverty Level
+            county->persons_below_poverty_level = atof(token);
+        } else if (token_index == 38) { // Population
+            county->population = atoi(token);
         }
-        src++;
-    }
-    *dest = '\0';
-}
 
-#define MAX_FIELDS 16
-
-// Parse line from CSV
-int parse_line(char *line, CountyInfo *data) {
-    char *fields[MAX_FIELDS];
-    char *token;
-    int field_index = 0;
-
-    token = strtok(line, ",");
-    while (token && field_index < MAX_FIELDS) {
-        clean_field(token);
-        fields[field_index++] = token;
+        // Move to the next token
         token = strtok(NULL, ",");
+        token_index++;
     }
-
-    if (field_index < 15) return -1;
-
-    strncpy(data->county_name, fields[0], sizeof(data->county_name) - 1);
-    strncpy(data->state, fields[1], sizeof(data->state) - 1);
-    data->education_bach = atof(fields[2]);
-    data->education_hs = atof(fields[3]);
-    for (int i = 4; i < 11; i++) {
-        data->ethnicities[i - 4] = atof(fields[i]);
-    }
-    data->median_household_income = atoi(fields[11]);
-    data->per_capita_income = atoi(fields[12]);
-    data->persons_below_poverty_level = atof(fields[13]);
-    data->population = atoi(fields[14]);
-
     return 0;
 }
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 void display() {
     for (int c = 1; c < county_count; c++) {
         CountyInfo county = county_data[c];
         printf("%s, %s:\n", county.county_name, county.state);
-        printf("\tBachelor or Higher: %.2f%%\n", county.education_bach);
-        printf("\tHigh School or Higher: %.2f%%\n", county.education_hs);
+        printf("\tBachelor or Higher: %f%%\n", county.education_bach);
+        printf("\tHigh School or Higher: %f%%\n", county.education_hs);
         printf("\tEthnicities:\n");
-        printf("\t\tAmerican Indian and Alaska Native: %.2f%%\n", county.ethnicities[0]);
-        printf("\t\tAsian: %.2f%%\n", county.ethnicities[1]);
-        printf("\t\tBlack: %.2f%%\n", county.ethnicities[2]);
-        printf("\t\tHispanic or Latino: %.2f%%\n", county.ethnicities[3]);
-        printf("\t\tPacific Islander: %.2f%%\n", county.ethnicities[4]);
-        printf("\t\tMixed: %.2f%%\n", county.ethnicities[5]);
-        printf("\t\tWhite: %.2f%%\n", county.ethnicities[6]);
-        printf("\t\tWhite, not Hispanic or Latino: %.2f%%\n", county.ethnicities[7]);
+        printf("\t\tAmerican Indian and Alaska Native: %f%%\n", county.ethnicities[0]);
+        printf("\t\tAsian: %f%%\n", county.ethnicities[1]);
+        printf("\t\tBlack: %f%%\n", county.ethnicities[2]);
+        printf("\t\tHispanic or Latino: %f%%\n", county.ethnicities[3]);
+        printf("\t\tPacific Islander: %f%%\n", county.ethnicities[4]);
+        printf("\t\tMixed: %f%%\n", county.ethnicities[5]);
+        printf("\t\tWhite: %f%%\n", county.ethnicities[6]);
+        printf("\t\tWhite, not Hispanic or Latino: %f%%\n", county.ethnicities[7]);
         printf("\tMedian Household Income: $%d\n", county.median_household_income);
         printf("\tPer Capita Income: $%d\n", county.per_capita_income);
-        printf("\tersons Below Poverty Level: %.2f%%\n", county.persons_below_poverty_level);
+        printf("\tPersons Below Poverty Level: %f%%\n", county.persons_below_poverty_level);
         printf("\tPopulation: %d\n", county.population);
     } 
 }
@@ -187,32 +111,148 @@ void filter_state(char *state) {
     int remaining = 0;
     for (int c = 0; c < county_count; c++) {
         if (strcmp(county_data[c].state, state) == 0) {
-            remaining++;
+            //remaining++;
+            county_data[remaining++] = county_data[c];
         }
     }
-    printf("Filter by State: state = %s, %d entries\n", state, remaining);
+    county_count = remaining;
+    printf("Filter: state == %s (%d entries)\n", state, county_count);
 
 }
 
+
+
 void filter_number(char *field, char *comparison, float number) {
+    int remaining = 0;
+    for (int c = 0; c < county_count; c++) {
+        float field_value = 0.0;
+        // identify field, get value of that field
+        if (strcmp(field, "Education.Bachelor's Degree or Higher") == 0) {
+            field_value = county_data[c].education_bach;
+        } else if (strcmp(field, "Education.High School or Higher") == 0) {
+            field_value = county_data[c].education_hs;
+        } else if (strcmp(field, "Income.Median Household Income") == 0) {
+            field_value = county_data[c].median_household_income;
+        } else if (strcmp(field, "Income.Per Capita Income") == 0) {
+            field_value = county_data[c].per_capita_income;
+        } else if (strcmp(field, "Income.Persons Below Poverty Level") == 0) {
+            field_value = county_data[c].persons_below_poverty_level;
+        } else if (strcmp(field, "Population.2014 Population") == 0) {
+            field_value = county_data[c].population;
+        } else if (strcmp(field, "Ethnicities.American Indian and Alaska Native Alone") == 0) {
+            field_value = county_data[c].ethnicities[0];
+        } else if (strcmp(field, "Ethnicities.Asian Alone") == 0) {
+            field_value = county_data[c].ethnicities[1];
+        } else if (strcmp(field, "Ethnicities.Black Alone") == 0) {
+            field_value = county_data[c].ethnicities[2];
+        } else if (strcmp(field, "Ethnicities.Hispanic or Latino") == 0) {
+            field_value = county_data[c].ethnicities[3];
+        } else if (strcmp(field, "Ethnicities.Native Hawaiian and Other Pacific Islander Alone") == 0) {
+            field_value = county_data[c].ethnicities[4];
+        } else if (strcmp(field, "Ethnicities.Two or More Races") == 0) {
+            field_value = county_data[c].ethnicities[5];
+        } else if (strcmp(field, "Ethnicities.White Alone") == 0) {
+            field_value = county_data[c].ethnicities[6];
+        } else if (strcmp(field, "Ethnicities.White Alone not Hispanic or Latino") == 0) {
+            field_value = county_data[c].ethnicities[7];
+        }
+
+        // Compare as requested
+        if ((strcmp(comparison, "ge") == 0 && field_value >= number) 
+            ||
+            (strcmp(comparison, "le") == 0 && field_value <= number)){
+            //remaining++;
+            county_data[remaining++] = county_data[c];
+        }
+    }
+    county_count = remaining;
+    printf("Filter: %s %s %f (%d entries)\n", field, comparison, number, county_count);
 
 }
 
 void population_total() {
-    
+    int total = 0;
+    for (int c = 0; c < county_count; c++) {
+        total += county_data[c].population;
+    }
+    printf("2014 population: %d\n", total);
 }
 
-void population_field() {
-
+void population_field(char *field) {
+    int total = 0;
+    for (int c = 0; c < county_count; c++) {
+        float percentage = 0.0;
+        // identify field, get value of that field
+        if (strcmp(field, "Education.Bachelor's Degree or Higher") == 0) {
+            percentage = county_data[c].education_bach;
+        } else if (strcmp(field, "Education.High School or Higher") == 0) {
+            percentage = county_data[c].education_hs;
+        } else if (strcmp(field, "Income.Persons Below Poverty Level") == 0) {
+            percentage = county_data[c].persons_below_poverty_level;
+        } else if (strcmp(field, "Ethnicities.American Indian and Alaska Native Alone") == 0) {
+            percentage = county_data[c].ethnicities[0];
+        } else if (strcmp(field, "Ethnicities.Asian Alone") == 0) {
+            percentage = county_data[c].ethnicities[1];
+        } else if (strcmp(field, "Ethnicities.Black Alone") == 0) {
+            percentage = county_data[c].ethnicities[2];
+        } else if (strcmp(field, "Ethnicities.Hispanic or Latino") == 0) {
+            percentage = county_data[c].ethnicities[3];
+        } else if (strcmp(field, "Ethnicities.Native Hawaiian and Other Pacific Islander Alone") == 0) {
+            percentage = county_data[c].ethnicities[4];
+        } else if (strcmp(field, "Ethnicities.Two or More Races") == 0) {
+            percentage = county_data[c].ethnicities[5];
+        } else if (strcmp(field, "Ethnicities.White Alone") == 0) {
+            percentage = county_data[c].ethnicities[6];
+        } else if (strcmp(field, "Ethnicities.White Alone not Hispanic or Latino") == 0) {
+            percentage = county_data[c].ethnicities[7];
+        }
+        total += (int)(county_data[c].population * (percentage / 100));
+    }
+    printf("2014 %s population: %d\n", field, total);
 }
 
-void percent() {
+void percent(char *field) {
+    float total_pop = 0.0;
+    float total_sub_pop = 0.0; 
+
+    for (int c = 0; c < county_count; c++) {
+        total_pop += county_data[c].population;
+
+        // Check the field and sum up the corresponding sub-population
+        if (strcmp(field, "Education.Bachelor's Degree or Higher") == 0) {
+            total_sub_pop += (county_data[c].education_bach / 100.0) * county_data[c].population;
+        } else if (strcmp(field, "Education.High School or Higher") == 0) {
+            total_sub_pop += (county_data[c].education_hs / 100.0) * county_data[c].population;
+        } else if (strcmp(field, "Ethnicities.American Indian and Alaska Native Alone") == 0) {
+            total_sub_pop += (county_data[c].ethnicities[0] / 100.0) * county_data[c].population; // Adjust index based on the correct ethnicity
+        } else if (strcmp(field, "Ethnicities.Asian Alone") == 0) {
+            total_sub_pop += (county_data[c].ethnicities[1] / 100.0) * county_data[c].population;
+        } else if (strcmp(field, "Ethnicities.Black Alone") == 0) {
+            total_sub_pop += (county_data[c].ethnicities[2] / 100.0) * county_data[c].population;
+        } else if (strcmp(field, "Ethnicities.Hispanic or Latino") == 0) {
+            total_sub_pop += (county_data[c].ethnicities[3] / 100.0) * county_data[c].population;
+        } else if (strcmp(field, "Ethnicities.Native Hawaiian and Other Pacific Islander Alone") == 0) {
+            total_sub_pop += (county_data[c].ethnicities[4] / 100.0) * county_data[c].population;
+        } else if (strcmp(field, "Ethnicities.Two or More Races") == 0) {
+            total_sub_pop += (county_data[c].ethnicities[5] / 100.0) * county_data[c].population;
+        } else if (strcmp(field, "Ethnicities.White Alone") == 0) {
+            total_sub_pop += (county_data[c].ethnicities[6] / 100.0) * county_data[c].population;
+        } else if (strcmp(field, "Ethnicities.White Alone, not Hispanic or Latino") == 0) {
+            total_sub_pop += (county_data[c].ethnicities[7] / 100.0) * county_data[c].population;
+        } else if (strcmp(field, "Income.Persons Below Poverty Level") == 0) {
+            total_sub_pop += (county_data[c].persons_below_poverty_level / 100.0) * county_data[c].population;
+        }    
+    }
+
+    // Calculate percentage
+    if (total_pop > 0) { // Avoid divide by 0 error
+        float percentage = (total_sub_pop / total_pop) * 100;
+        printf("2014 %s percentage: %f%%\n", field, percentage);
+    } else {
+        printf("2014 %s percentage: 0%%\n", field);
+    }
 
 } 
-
-
-
-
 
 
 int main(int argc, char *argv[]) {
@@ -245,12 +285,12 @@ int main(int argc, char *argv[]) {
 
     while (fgets(line, sizeof(line), demographics_file)) {
         line_num++;
-        CountyInfo data;
-        if (parse_line(line, &data) != 0) {
+        CountyInfo county;
+        if (parse_line(line, &county) != 0) {
             fprintf(stderr, "Malformed data [line %d]\n", line_num);
         } else {
             valid_entry_count++;
-            county_data[valid_entry_count] = data;
+            county_data[valid_entry_count] = county;
         }
     }
     county_count = valid_entry_count;
@@ -278,8 +318,8 @@ int main(int argc, char *argv[]) {
         // Initial vars to save operation arguments
         char operation[sizeof(op_line)];
         char field[sizeof(op_line)];
-        char comparison[sizeof(op_line)];
-        float number;
+        //char comparison[sizeof(op_line)];
+        //float number;
 
         // Identify operation, map to argument variables
         if (strcmp(op_line, "display\n") == 0) {
@@ -288,18 +328,26 @@ int main(int argc, char *argv[]) {
             filter_state(field);
         } else if (strncmp(op_line, "filter:", strlen("filter:")) == 0){
             char *filter = strtok(op_line, ":");
-            *field = strdup(strtok(NULL, ":"));
-            *comparison = strdup(strtok(NULL, ":"));
+            char *f = strtok(NULL, ":");
+            char *comparison = strtok(NULL, ":");
             //char *number_str = strdup(strtok(NULL, ":"));
             //number_str[strlen(number_str)-1] = '\0';
             //number = atof(number_str);
-            number = atof(strdup(strtok(NULL, ":")));
-            filter_number(field, comparison, number);
+            float number = atof(strdup(strtok(NULL, ":")));
+            filter_number(f, comparison, number);
         } else if (strcmp(op_line, "population-total\n") == 0) {
             population_total();
-        } else if (sscanf(op_line, "population:%s", field) == 1) {
-            printf("field: %s.", field);
-            population_field(field);
+        } else if (strncmp(op_line, "population:", strlen("population:")) == 0) {
+            //(sscanf(op_line, "population:%s", field) == 1) {
+            char *op = strtok(op_line, ":");
+            char *f = strtok(NULL, ":");
+            f[strlen(f)-1] = '\0';
+            population_field(f);
+        } else if (strncmp(op_line, "percent:", strlen("percent:")) == 0) {
+            char *op = strtok(op_line, ":");
+            char *f = strtok(NULL, ":");
+            f[strlen(f)-1] = '\0';
+            percent(f);
         } else {
             fprintf(stderr, "Error: Malformed operation on line %d\n", op_line_num);
         }
