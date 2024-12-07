@@ -86,7 +86,7 @@ int parse_line(char *line, CountyInfo *county) {
 
 
 void display() {
-    for (int c = 1; c < county_count; c++) {
+    for (int c = 0; c < county_count; c++) {
         CountyInfo county = county_data[c];
         printf("%s, %s:\n", county.county_name, county.state);
         printf("\tBachelor or Higher: %f%%\n", county.education_bach);
